@@ -1,0 +1,55 @@
+%html
+  :css
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+  %body
+    #map
+
+    %script{type: "text/javascript", src: "https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyDdpR4R8loZM8MGSAGdnJoLtvWdpOV6B2g"}
+
+    :javascript
+      window.goodFoodAwards2014 = #{JSON.dump(awards)}
+
+      navigator.geolocation.getCurrentPosition(function(position) {
+  
+        var mapOptions = {
+          center: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          },
+          zoom: 8
+        };
+
+        var geocoder = new google.maps.Geocoder();
+
+        var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+        var service = new google.maps.places.PlacesService(map);
+        var item = window.goodFoodAwards2014[0].items[0];
+
+        function mapItem(item) {
+          service.textSearch({query: item.search_location}, function(results) {
+            if (results) {
+              var latLng = results[0].geometry.location;
+              var marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                title: item.business_name+': '+item.product_name
+              });
+              google.maps.event.addListener(marker, 'click', function() {
+                if (item.href) window.open(item.href);
+              });
+            } else {
+              setTimeout(function() {
+                mapItem(item)
+              }, 500);
+            }
+          });
+        }
+
+        window.goodFoodAwards2014.forEach(function(category) {
+          category.items.forEach(mapItem);
+        });
+      });
